@@ -1,14 +1,26 @@
-﻿using MySql.Data.MySqlClient;
-using System;
+﻿using System;
 using System.Data;
 using System.Threading.Tasks;
+using MySql.Data.MySqlClient;
 
 namespace DAL
 {
+    /// <summary>
+    /// נוסף בגרסה 2.
+    /// מחלקה שאחראית להכין את בסיס הנתונים לפני שהמערכת מתחילה לעבוד.
+    /// היא נקראת פעם אחת, כשהשרת עולה, ויוצרת את בסיס הנתונים, את הטבלאות ואת נתוני הפתיחה.
+    /// אפשר להריץ אותה שוב ושוב בלי נזק: בכל שלב נוצר רק מה שעוד לא קיים.
+    /// המחלקה סטטית, כי אין לה מצב משלה ואין צורך ליצור ממנה עצמים.
+    /// </summary>
     public static class DatabaseInitializer
     {
+        // שם בסיס הנתונים מוגדר במקום אחד בלבד, כדי שכל הפעולות ישתמשו באותו שם
         private const string DatabaseName = "SmartEnglishDB";
 
+        /// <summary>
+        /// פעולת האתחול הראשית - נקראת בעת עליית האפליקציה
+        /// </summary>
+        /// <param name="serverConnectionString">מחרוזת חיבור לשרת (ללא ציון בסיס הנתונים)</param>
         public static async Task InitializeAsync(string serverConnectionString)
         {
             // שלב א': יצירת בסיס הנתונים אם אינו קיים
@@ -17,10 +29,12 @@ namespace DAL
             // מחרוזת חיבור מלאה הכוללת את שם בסיס הנתונים
             string dbConnectionString = $"{serverConnectionString}Database={DatabaseName};";
 
-            // שלב ב': יצירת הטבלאות
+            // שלב ב': יצירת הטבלאות והתאמת עמודות חסרות
             await CreateTablesAsync(dbConnectionString);
 
+            // שלב ג': הכנסת נתוני ברירת מחדל לטבלת התפקידים ולטבלת המשתמשים
             await SeedRolesAsync(dbConnectionString);
+            await SeedUsersAsync(dbConnectionString);
         }
 
         /// <summary>
@@ -42,6 +56,9 @@ namespace DAL
             await command.ExecuteNonQueryAsync();
         }
 
+        /// <summary>
+        /// יוצרת את שמונת הטבלאות של המערכת, אם הן עוד לא קיימות.
+        /// </summary>
         private static async Task CreateTablesAsync(string connectionString)
         {
             using var connection = new MySqlConnection(connectionString);
@@ -49,22 +66,24 @@ namespace DAL
 
             // יצירת 8 הטבלאות בהתאם למסמך תכנון בסיס הנתונים של SmartEnglish
             string query = @"
-
                 -- תפקידים
                 CREATE TABLE IF NOT EXISTS Roles (
                     RoleID INT AUTO_INCREMENT PRIMARY KEY,
                     RoleName VARCHAR(30) NOT NULL UNIQUE
                 ) ENGINE=InnoDB;
 
-                -- 1. משתמשים
+                -- 1. משתמשים (כולל RoleID ו-IsActive)
                 CREATE TABLE IF NOT EXISTS Users ( 
                     UserID INT AUTO_INCREMENT PRIMARY KEY, 
                     Username VARCHAR(50) NOT NULL UNIQUE, 
                     PasswordHash VARCHAR(255) NOT NULL, 
                     FullName VARCHAR(100) NOT NULL, 
                     Email VARCHAR(100) NOT NULL UNIQUE, 
-                    Role VARCHAR(20) NOT NULL
-                );
+                    RoleID INT NOT NULL DEFAULT 3,
+                    IsActive BOOLEAN NOT NULL DEFAULT TRUE,
+                    CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (RoleID) REFERENCES Roles(RoleID)
+                ) ENGINE=InnoDB;
 
                 -- 2. קורסים 
                 CREATE TABLE IF NOT EXISTS Courses ( 
@@ -73,7 +92,7 @@ namespace DAL
                     TeacherID INT, 
                     Description TEXT, 
                     FOREIGN KEY (TeacherID) REFERENCES Users(UserID) ON DELETE SET NULL 
-                );
+                ) ENGINE=InnoDB;
 
                 -- 3. הרשמת תלמידים לקורסים (טבלת איחוד) 
                 CREATE TABLE IF NOT EXISTS UserCourses (
@@ -83,7 +102,7 @@ namespace DAL
                     EnrollmentDate DATETIME NOT NULL, 
                     FOREIGN KEY (StudentID) REFERENCES Users(UserID) ON DELETE CASCADE, 
                     FOREIGN KEY (CourseID) REFERENCES Courses(CourseID) ON DELETE CASCADE 
-                );
+                ) ENGINE=InnoDB;
 
                 -- 4. תרגילים 
                 CREATE TABLE IF NOT EXISTS Exercises ( 
@@ -93,7 +112,7 @@ namespace DAL
                     DifficultyLevel INT NOT NULL, 
                     CreatedBy INT, 
                     FOREIGN KEY (CreatedBy) REFERENCES Users(UserID) ON DELETE SET NULL 
-                );
+                ) ENGINE=InnoDB;
 
                 -- 5. שאלות בלומדה 
                 CREATE TABLE IF NOT EXISTS Questions ( 
@@ -105,7 +124,7 @@ namespace DAL
                     WrongAnswer2 VARCHAR(255), 
                     WrongAnswer3 VARCHAR(255), 
                     FOREIGN KEY (ExerciseID) REFERENCES Exercises(ExerciseID) ON DELETE CASCADE 
-                );
+                ) ENGINE=InnoDB;
 
                 -- 6. משימות (טבלת איחוד) 
                 CREATE TABLE IF NOT EXISTS Assignments ( 
@@ -115,7 +134,7 @@ namespace DAL
                     DueDate DATETIME NOT NULL, 
                     FOREIGN KEY (CourseID) REFERENCES Courses(CourseID) ON DELETE CASCADE, 
                     FOREIGN KEY (ExerciseID) REFERENCES Exercises(ExerciseID) ON DELETE CASCADE 
-                );
+                ) ENGINE=InnoDB;
 
                 -- 7. התקדמות תלמידים (טבלת איחוד) 
                 CREATE TABLE IF NOT EXISTS StudentProgress ( 
@@ -126,7 +145,7 @@ namespace DAL
                     CompletedAt DATETIME NOT NULL, 
                     FOREIGN KEY (StudentID) REFERENCES Users(UserID) ON DELETE CASCADE, 
                     FOREIGN KEY (ExerciseID) REFERENCES Exercises(ExerciseID) ON DELETE CASCADE 
-                );
+                ) ENGINE=InnoDB;
 
                 -- 8. מעקב נוכחות בשיעורים (טבלת איחוד) 
                 CREATE TABLE IF NOT EXISTS Attendance ( 
@@ -137,13 +156,27 @@ namespace DAL
                     Status VARCHAR(20) NOT NULL, 
                     FOREIGN KEY (CourseID) REFERENCES Courses(CourseID) ON DELETE CASCADE, 
                     FOREIGN KEY (StudentID) REFERENCES Users(UserID) ON DELETE CASCADE 
-                );";
+                ) ENGINE=InnoDB;";
 
             using var command = new MySqlCommand(query, connection);
             await command.ExecuteNonQueryAsync();
+
+            // דרך בטוחה ב-MySQL להוסיף את העמודה IsActive אם היא חסרה בטבלה ישנה
+            try
+            {
+                string addColSql = "ALTER TABLE Users ADD COLUMN IsActive BOOLEAN NOT NULL DEFAULT TRUE;";
+                using var alterCmd = new MySqlCommand(addColSql, connection);
+                await alterCmd.ExecuteNonQueryAsync();
+            }
+            catch (MySqlException)
+            {
+                // אם העמודה כבר קיימת, השגיאה תיקלט כאן והתוכנית תמשיך כרגיל
+            }
         }
 
-
+        /// <summary>
+        /// מכניסה לטבלת התפקידים את שלושת התפקידים הקבועים של המערכת.
+        /// </summary>
         private static async Task SeedRolesAsync(string dbConnectionString)
         {
             using var connection = new MySqlConnection(dbConnectionString);
@@ -153,23 +186,53 @@ namespace DAL
             string checkSql = "SELECT COUNT(*) FROM Roles;";
             using var checkCmd = new MySqlCommand(checkSql, connection);
 
-            // הפקודה מחזירה ערך בודד, מספר השורות, ומשם ממירים אותו למספר שלם
             long count = Convert.ToInt64(await checkCmd.ExecuteScalarAsync());
 
-            // מכניסים את התפקידים רק בהפעלה הראשונה.
-            // בלי הבדיקה, כל עלייה של השרת הייתה מנסה להכניס אותם שוב
             if (count == 0)
             {
                 string insertRolesSql = @"
-                    INSERT INTO Roles (RoleName) VALUES
-                    ('Admin'),
-                    ('Teacher'),
-                    ('Student');
+                    INSERT INTO Roles (RoleID, RoleName) VALUES
+                    (1, 'Admin'),
+                    (2, 'Teacher'),
+                    (3, 'Student');
                 ";
                 using var insertCmd = new MySqlCommand(insertRolesSql, connection);
                 await insertCmd.ExecuteNonQueryAsync();
             }
         }
 
+        /// <summary>
+        /// מכניסה לטבלת המשתמשים 10 משתמשי בדיקה ראשוניים (מנהל 1, 2 מורים ו-7 תלמידים).
+        /// </summary>
+        private static async Task SeedUsersAsync(string dbConnectionString)
+        {
+            using var connection = new MySqlConnection(dbConnectionString);
+            await connection.OpenAsync();
+
+            // בדיקה אם הטבלה ריקה לפני הכנסת נתוני ברירת המחדל
+            string checkSql = "SELECT COUNT(*) FROM Users;";
+            using var checkCmd = new MySqlCommand(checkSql, connection);
+
+            long count = Convert.ToInt64(await checkCmd.ExecuteScalarAsync());
+
+            if (count == 0)
+            {
+                string insertUsersSql = @"
+                    INSERT INTO Users (Username, FullName, Email, PasswordHash, RoleID, IsActive) VALUES 
+                    ('admin', 'System Admin', 'admin@smartenglish.com', 'admin123', 1, TRUE),
+                    ('sarah_t', 'Sarah Teacher', 'sarah@school.com', 'teacher123', 2, TRUE),
+                    ('david_t', 'David Teacher', 'david@school.com', 'teacher123', 2, TRUE),
+                    ('alex_s', 'Alex Student', 'alex@student.com', 'student123', 3, TRUE),
+                    ('emma_s', 'Emma Student', 'emma@student.com', 'student123', 3, TRUE),
+                    ('john_s', 'John Student', 'john@student.com', 'student123', 3, TRUE),
+                    ('mira_s', 'Mira Student', 'mira@student.com', 'student123', 3, TRUE),
+                    ('dani_s', 'Dani Student', 'dani@student.com', 'student123', 3, TRUE),
+                    ('noa_s', 'Noa Student', 'noa@student.com', 'student123', 3, TRUE),
+                    ('ron_s', 'Ron Student', 'ron@student.com', 'student123', 3, FALSE);
+                ";
+                using var insertCmd = new MySqlCommand(insertUsersSql, connection);
+                await insertCmd.ExecuteNonQueryAsync();
+            }
+        }
     }
 }

@@ -14,16 +14,25 @@ namespace API
             // רישום מסמך שמתאר אוטומטית את כל נקודות הקצה של השרת
             builder.Services.AddOpenApi();
 
-            // בניית האפליקציה מתוך ההגדרות שנרשמו
-            var app = builder.Build();
-
             // מאיפה מגיעה מחרוזת החיבור:
             // השרת קורא את ההגדרות שלו מכמה מקורות ומאחד אותם: קובץ ההגדרות של הפרויקט, ומעליו קובץ הסודות של המשתמש.
             // את מחרוזת החיבור שמרנו בקובץ הסודות, בתוך קבוצת מחרוזות החיבור, תחת השם שמופיע כאן בין המירכאות.
             // פותחים את קובץ הסודות בלחיצה ימנית על פרויקט שכבת השירות, ובחירה בפריט של ניהול הסודות בתפריט.
             // הקובץ נשמר בתיקייה של המשתמש במחשב, מחוץ לתיקיית הפרויקט, ולכן הסיסמה לא עולה לגיט.
             // אם המחרוזת לא נמצאה, נזרקת חריגה, והשרת לא עולה.
-            // המחרוזת מתארת רק את השרת, בלי שם בסיס הנתונים, כי האתחול מתחבר קודם לשרת עצמו
+            //
+            // רישום מחלקת הגישה למשתמשים עם מחרוזת חיבור מלאה (כולל שם בסיס הנתונים), כדי שהבקרים יקבלו אותה אוטומטית.
+            // נוצר עצם אחד בלבד, וכל הבקשות משתמשות בו, כי אין בו נתונים שמשתנים
+            string dbConnectionString = (builder.Configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found."))
+                + "Database=SmartEnglishDB;";
+            builder.Services.AddSingleton(new DAL.UserDB(dbConnectionString));
+
+            // בניית האפליקציה מתוך ההגדרות שנרשמו
+            var app = builder.Build();
+
+            // שליפה של אותה מחרוזת חיבור מקובץ הסודות, הפעם בלי להוסיף את שם בסיס הנתונים,
+            // כי האתחול מתחבר קודם לשרת עצמו, ורק אחר כך יוצר את בסיס הנתונים
             string serverConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 

@@ -1,6 +1,107 @@
-@API_HostAddress = http://localhost:5130
+# קובץ בדיקות לנקודות הקצה של שכבת השירות. נוסף בגרסה 1, והבקשות של המשתמשים נוספו בגרסה 3.
+# מריצים את שכבת השירות, ואז לוחצים על הקישור שמופיע מעל כל בקשה כדי לשלוח אותה.
+# הסימן ### מפריד בין בקשה לבקשה.
 
-GET {{API_HostAddress}}/weatherforecast/
+# הכתובת של השרת. כל הבקשות בקובץ משתמשות במשתנה הזה
+@SmartEnglish_HostAddress = http://localhost:5130
+
+###
+
+# ===== משתמשים =====
+
+# כל המשתמשים
+GET {{SmartEnglish_HostAddress}}/api/users
 Accept: application/json
+
+###
+
+# משתמש לפי מזהה
+GET {{SmartEnglish_HostAddress}}/api/users/1
+Accept: application/json
+
+###
+
+# האם שם משתמש קיים (צפוי: אמת)
+GET {{SmartEnglish_HostAddress}}/api/users/exists/admin
+
+###
+
+# האם שם משתמש קיים (צפוי: אמת)
+GET {{SmartEnglish_HostAddress}}/api/users/exists/sarah_t
+
+###
+
+# האם אימייל קיים (צפוי: אמת)
+GET {{SmartEnglish_HostAddress}}/api/users/email-exists/admin@smartenglish.com
+
+###
+
+# ספירת משתמשים לפי תפקיד
+GET {{SmartEnglish_HostAddress}}/api/users/count-by-role
+
+###
+
+# הוספת משתמש בדיקה (תפקיד ברירת מחדל: תלמיד)
+# גוף הבקשה כתוב בפורמט שהשרת יודע להמיר אוטומטית לעצם משתמש: שם השדה, נקודתיים והערך
+POST {{SmartEnglish_HostAddress}}/api/users
+Content-Type: application/json
+
+{
+  "username": "test.user",
+  "fullName": "Test User",
+  "email": "test.user@smartenglish.com",
+  "password": "Test123"
+}
+
+###
+
+# התחברות עם פרטים נכונים (צפוי: 200 והמשתמש)
+POST {{SmartEnglish_HostAddress}}/api/users/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+###
+
+# התחברות עם סיסמה שגויה (צפוי: 401)
+POST {{SmartEnglish_HostAddress}}/api/users/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "wrongpassword"
+}
+
+###
+
+# הבקשות הבאות פועלות על משתמש הבדיקה.
+# לפני ההרצה, להחליף את 11 במזהה שהוחזר בהוספת המשתמש.
+
+# שינוי תפקיד
+PUT {{SmartEnglish_HostAddress}}/api/users/11/role?roleName=Teacher
+
+###
+
+# עדכון סיסמה
+PUT {{SmartEnglish_HostAddress}}/api/users/11/password
+Content-Type: application/json
+
+"NewPass123"
+
+###
+
+# עדכון אימייל
+PUT {{SmartEnglish_HostAddress}}/api/users/11/email
+Content-Type: application/json
+
+"new.test.user@smartenglish.com"
+
+###
+
+# מחיקת משתמש הבדיקה
+DELETE {{SmartEnglish_HostAddress}}/api/users/11
 
 ###
