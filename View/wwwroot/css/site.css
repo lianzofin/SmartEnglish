@@ -1,0 +1,192 @@
+﻿/* =====================================================
+   SmartEnglish - Custom Theme & Styles
+   עיצוב ייחודי לפלטפורמת למידת אנגלית
+   ===================================================== */
+
+/* ---------- 1. צבעים וגופנים ייחודיים ---------- */
+:root {
+    /* פלטת הצבעים החדשה של SmartEnglish */
+    --primary: #4F46E5; /* סגול-אינדיגו עמוק: מיתוג ראשי */
+    --primary-dark: #3730A3; /* מעבר עכבר ודגשים */
+    --primary-light: #EEF2FF; /* רקעים בהירים לרכיבים */
+
+    --secondary-blue: #0EA5E9; /* תכלת חדשני: התקדמות ודגשים */
+    --accent-gold: #F59E0B; /* צהוב-זהב: ניקוד, כפתורים והישגים */
+    --accent-gold-hover: #D97706;
+    --true: #10B981; /* ירוק אמת / תשובה נכונה */
+    --true-light: #ECFDF5;
+    --fake: #EF4444; /* אדום / תשובה שגויה */
+    --fake-light: #FEF2F2;
+    /* מעבר למשתני Bootstrap */
+    --bs-primary: #4F46E5;
+    --bs-primary-rgb: 79, 70, 229;
+    --bs-link-color: #4F46E5;
+    --bs-link-hover-color: #3730A3;
+    --bs-body-bg: #F8FAFC;
+    --bs-body-color: #0F172A;
+    --bs-body-font-family: 'Heebo', system-ui, sans-serif;
+    --bs-border-radius: 16px;
+    --bs-border-radius-lg: 24px;
+}
+
+body {
+    font-family: 'Heebo', system-ui, sans-serif;
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+}
+
+h1, h2, h3, h4, h5, h6, .btn {
+    font-family: 'Rubik', 'Heebo', sans-serif;
+}
+
+/* ---------- 2. כפתורים מעוצבים ---------- */
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    border-radius: 12px;
+}
+
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+
+.btn-accent {
+    background-color: var(--accent-gold);
+    color: #FFFFFF;
+    border: none;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
+}
+
+    .btn-accent:hover {
+        background-color: var(--accent-gold-hover);
+        color: #FFFFFF;
+    }
+
+.btn-outline-primary {
+    color: var(--primary);
+    border-color: var(--primary);
+    border-radius: 12px;
+}
+
+    .btn-outline-primary:hover {
+        background-color: var(--primary);
+        color: #fff;
+    }
+
+/* ---------- 3. סרגל עליון ולוגו ---------- */
+.topbar {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.logo-icon-wrapper {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary-blue));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+}
+
+.logo-name {
+    font-family: 'Rubik', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: #0F172A;
+    letter-spacing: -0.5px;
+}
+
+.logo-tag {
+    font-size: 13px;
+    color: #64748B;
+}
+
+/* ---------- 4. אלמנטים מיוחדים לשפה וללומדה ---------- */
+.mark-word {
+    background: linear-gradient(120deg, rgba(14, 165, 233, 0.25) 0%, rgba(245, 158, 11, 0.3) 100%);
+    padding-inline: 6px;
+    border-radius: 6px;
+}
+
+/* קופסת לומדה מעוצבת בדימוי אפליקציה */
+.app-card-preview {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 20px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+}
+
+.icon-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ביטול מוחלט של מסגרות שחורות על כותרות וסימונים */
+h1, h2, h3, h4, h5, h6, span {
+    outline: none !important;
+    border: none !important;
+}
+
+.mark-word {
+    background: none !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color: var(--primary) !important;
+}
+
+
+/* ביטול מסגרות הדגשה וסימון לא רצויים */
+.mark-word {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--primary);
+    padding: 0;
+}
+
+/* יישור אנגלית משמאל לימין */
+.english-text {
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+.step-num {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary-blue));
+    color: #FFFFFF;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+}
+
+.badge-score {
+    background-color: #FEF3C7;
+    color: #D97706;
+    font-weight: 700;
+}

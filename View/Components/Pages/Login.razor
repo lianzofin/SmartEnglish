@@ -1,0 +1,35 @@
+﻿@page "/login"
+
+@* נוסף בגרסה 4.
+   דף הכניסה. בשלב הזה הוא עיצוב בלבד: אין בו קוד, והוא לא פונה לשכבת השירות.
+   השורה הראשונה קובעת את הכתובת של הדף. *@
+
+<PageTitle>כניסה · SmartEnglish</PageTitle>
+
+@* רשת של ספריית העיצוב: הכרטיס ממורכז, ורוחבו משתנה לפי גודל המסך *@
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-5">
+
+            <div class="card app-card-preview shadow-sm border-0 rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    <h1 class="h2 fw-bold text-dark">כניסה</h1>
+                    <p class="text-secondary mb-4">היכנסו לחשבון כדי להמשיך לתרגל ולצבור נקודות.</p>
+
+                    @* הדפדפן לא בודק את השדות בעצמו. הבדיקה תיכתב בהמשך בקוד *@
+                    <form novalidate>
+                        @* כל שדה נבנה מהרכיב המשותף של שדה טופס *@
+                        <Field Id="login-username" Label="שם משתמש" Name="username" />
+                        <Field Id="login-password" Label="סיסמה" Name="password" Type="password" Dir="ltr" />
+
+                        @* כפתור הכניסה למערכת *@
+                        <button class="btn btn-primary btn-lg w-100 mt-3" type="button">כניסה למערכת</button>
+                    </form>
+                </div>
+            </div>
+
+            <p class="text-center mt-4 text-secondary">אין לך חשבון? <a class="fw-bold text-primary text-decoration-none" href="register">להרשמה</a></p>
+
+        </div>
+    </div>
+</div>
