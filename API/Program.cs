@@ -28,8 +28,20 @@ namespace API
                 + "Database=SmartEnglishDB;";
             builder.Services.AddSingleton(new DAL.UserDB(dbConnectionString));
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader());
+            });
+
+
+
             // בניית האפליקציה מתוך ההגדרות שנרשמו
             var app = builder.Build();
+
+            app.UseCors();
 
             // שליפה של אותה מחרוזת חיבור מקובץ הסודות, הפעם בלי להוסיף את שם בסיס הנתונים,
             // כי האתחול מתחבר קודם לשרת עצמו, ורק אחר כך יוצר את בסיס הנתונים

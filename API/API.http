@@ -74,34 +74,3 @@ Content-Type: application/json
   "username": "admin",
   "password": "wrongpassword"
 }
-
-###
-
-# הבקשות הבאות פועלות על משתמש הבדיקה.
-# לפני ההרצה, להחליף את 11 במזהה שהוחזר בהוספת המשתמש.
-
-# שינוי תפקיד
-PUT {{SmartEnglish_HostAddress}}/api/users/11/role?roleName=Teacher
-
-###
-
-# עדכון סיסמה
-PUT {{SmartEnglish_HostAddress}}/api/users/11/password
-Content-Type: application/json
-
-"NewPass123"
-
-###
-
-# עדכון אימייל
-PUT {{SmartEnglish_HostAddress}}/api/users/11/email
-Content-Type: application/json
-
-"new.test.user@smartenglish.com"
-
-###
-
-# מחיקת משתמש הבדיקה
-DELETE {{SmartEnglish_HostAddress}}/api/users/11
-
-###
