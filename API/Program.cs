@@ -64,6 +64,7 @@ namespace API
             app.MapControllers();
 
             // הפעלת השרת. מכאן הוא מקבל בקשות עד שעוצרים אותו
+            // _
             await app.RunAsync();
         }
     }
