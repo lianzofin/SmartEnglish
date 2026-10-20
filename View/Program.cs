@@ -11,8 +11,11 @@ string apiBaseUrl = builder.Configuration["ApiBaseUrl"]
     ?? throw new InvalidOperationException("ApiBaseUrl not found in appsettings.json.");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseUrl) });
-// -------------------------------------------------------------
 
+// --- שלב 3 (גרסה 6): רישום שירות UserSession ---
+builder.Services.AddScoped<View.Services.UserSession>();
+
+// -------------------------------------------------------------
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

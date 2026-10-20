@@ -1,7 +1,8 @@
 ﻿@page "/"
+@implements IDisposable
+@inject UserSession Session
 
-@* נוסף בגרסה 4 - דף הבית המעודכן עבור SmartEnglish *@
-
+@* נוסף בגרסה 4, עודכן בגרסה 6 לעדכון בזמן אמת ביציאה/כניסה *@
 <PageTitle>SmartEnglish · מרכז ללימודי אנגלית</PageTitle>
 
 @* ===== 1. HERO SECTION: פתיחה ===== *@
@@ -19,10 +20,23 @@
                 <p class="lead text-secondary mb-4">
                     SmartEnglish מחברת בין השיעור הפרונטלי לתרגול אינטראקטיבי בבית. התלמידים נהנים מתרגול אוצר מילים, דקדוק ומשוב מיידי, והמורים מקבלים תמונה מלאה על ההתקדמות והנוכחות.
                 </p>
-                <div class="d-flex flex-wrap gap-3">
-                    <a class="btn btn-primary btn-lg px-4 py-3 fw-bold" href="register">להרשמה למערכת</a>
-                    <a class="btn btn-outline-primary btn-lg px-4 py-3 fw-semibold" href="login">כניסה לרשומים</a>
-                </div>
+
+                @* כפתורים: מוצגים לפי מצב ההתחברות *@
+                @if (!Session.IsLoggedIn)
+                {
+                    <div class="d-flex flex-wrap gap-3">
+                        <a class="btn btn-primary btn-lg px-4 py-3 fw-bold" href="register">להרשמה למערכת</a>
+                        <a class="btn btn-outline-primary btn-lg px-4 py-3 fw-semibold" href="login">כניסה לרשומים</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-wrap gap-3">
+                        <span class="btn btn-light btn-lg px-4 py-3 fw-bold text-primary disabled">
+                            👋 כיף לראות אותך, @Session.FullName!
+                        </span>
+                    </div>
+                }
             </div>
 
             @* תצוגה מקדימה של הלומדה בצורת Widget אפליקציה *@
@@ -160,7 +174,28 @@
             <p class="lead opacity-90 mb-4 max-width-600 mx-auto">
                 הצטרפו ל-SmartEnglish והפכו את הלמידה לחווייתית, רציפה ואפקטיבית.
             </p>
-            <a class="btn btn-accent btn-lg px-5 py-3 fw-bold fs-5" href="register">הרשמה מהירה לחוג</a>
+            @if (!Session.IsLoggedIn)
+            {
+                <a class="btn btn-accent btn-lg px-5 py-3 fw-bold fs-5" href="register">הרשמה מהירה לחוג</a>
+            }
         </div>
     </div>
 </section>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // נרשמים לאירוע שינוי המשתמש כדי שהדף יתרענן בלחיצה על יציאה/כניסה
+        Session.OnChange += OnSessionChanged;
+    }
+
+    private void OnSessionChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Session.OnChange -= OnSessionChanged;
+    }
+}

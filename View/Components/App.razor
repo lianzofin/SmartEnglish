@@ -2,8 +2,7 @@
 <html lang="he" dir="rtl">
 
 @* נוצר בגרסה 1 מהתבנית. בגרסה 4 הוגדר כדף בעברית, ונוספו הגופנים, קובץ העיצוב וסמל האתר.
-    זה דף האם של האתר: כל הדפים נטענים לתוכו. כאן נקבעים השפה, הכיוון והקבצים שנטענים בכל דף. *@
-
+   זה דף האם של האתר: כל הדפים נטענים לתוכו. כאן נקבעים השפה, הכיוון והקבצים שנטענים בכל דף. *@
 <head>
     <meta charset="utf-8" />
     @* התאמה לרוחב המסך, כדי שהאתר ייראה טוב גם בטלפון *@
@@ -18,17 +17,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=Rubik:wght@500;600;700&display=swap" />
     <link rel="stylesheet" href="@Assets["css/site.css"]" />
-    <link rel="stylesheet" href="@Assets["SmartEnglishView.styles.css"]" />
+    <link rel="stylesheet" href="@Assets["View.styles.css"]" />
     <ImportMap />
     @* סמל האתר בלשונית הדפדפן. הדפדפן בוחר את הראשון שהוא יודע להציג *@
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
+    <HeadOutlet @rendermode="pageRenderMode" />
 </head>
 
 <body>
     @* הרכיב שבוחר איזה דף להציג לפי הכתובת *@
-    <Routes />
+    <Routes @rendermode="pageRenderMode" />
     @* חלון שמופיע כשהחיבור לשרת נקטע *@
     <ReconnectModal />
     @* הקוד שמחבר את הדפדפן לשרת ומעדכן את הדף *@
@@ -36,3 +35,8 @@
 </body>
 
 </html>
+
+@code {
+    private static readonly IComponentRenderMode pageRenderMode =
+        new InteractiveServerRenderMode(prerender: false);
+}

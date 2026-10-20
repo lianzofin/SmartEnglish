@@ -1,9 +1,11 @@
 ﻿@page "/login"
+@using System.Net
+@using Model
+@inject HttpClient Http
+@inject UserSession Session
+@inject NavigationManager Navigation
 
-@* נוסף בגרסה 4.
-   דף הכניסה. בשלב הזה הוא עיצוב בלבד: אין בו קוד, והוא לא פונה לשכבת השירות.
-   השורה הראשונה קובעת את הכתובת של הדף. *@
-
+@* נוסף בגרסה 4, עודכן בגרסה 6 עם לוגיקת התחברות מלאה *@
 <PageTitle>כניסה · SmartEnglish</PageTitle>
 
 @* רשת של ספריית העיצוב: הכרטיס ממורכז, ורוחבו משתנה לפי גודל המסך *@
@@ -16,14 +18,22 @@
                     <h1 class="h2 fw-bold text-dark">כניסה</h1>
                     <p class="text-secondary mb-4">היכנסו לחשבון כדי להמשיך לתרגל ולצבור נקודות.</p>
 
-                    @* הדפדפן לא בודק את השדות בעצמו. הבדיקה תיכתב בהמשך בקוד *@
                     <form novalidate>
-                        @* כל שדה נבנה מהרכיב המשותף של שדה טופס *@
-                        <Field Id="login-username" Label="שם משתמש" Name="username" />
-                        <Field Id="login-password" Label="סיסמה" Name="password" Type="password" Dir="ltr" />
+                        @* כל שדה נבנה מהרכיב המשותף של שדה טופס ומחובר בקישור דו-כיווני *@
+                        <Field Id="login-username" Label="שם משתמש" Name="username" @bind-Value="username" />
+                        <Field Id="login-password" Label="סיסמה" Name="password" Type="password" Dir="ltr" @bind-Value="password" />
+
+                        @* התרעת שגיאה *@
+                        @if (errorMessage != null)
+                        {
+                            <div class="alert alert-danger my-3" role="alert">@errorMessage</div>
+                        }
 
                         @* כפתור הכניסה למערכת *@
-                        <button class="btn btn-primary btn-lg w-100 mt-3" type="button">כניסה למערכת</button>
+                        <button class="btn btn-primary btn-lg w-100 mt-3" type="button"
+                                disabled="@isBusy" @onclick="LoginAsync">
+                            @(isBusy ? "מתחברים..." : "כניסה למערכת")
+                        </button>
                     </form>
                 </div>
             </div>
@@ -33,3 +43,69 @@
         </div>
     </div>
 </div>
+
+@code {
+    private string? username;
+    private string? password;
+    private string? errorMessage;
+    private bool isBusy;
+
+    private async Task LoginAsync()
+    {
+        errorMessage = null;
+
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        {
+            errorMessage = "יש למלא שם משתמש וסיסמה.";
+            return;
+        }
+
+        isBusy = true;
+        try
+        {
+            // שולחים לבקר את השם והסיסמה
+            User credentials = new User
+            {
+                Username = username.Trim(),
+                Password = password
+            };
+
+            HttpResponseMessage response = await Http.PostAsJsonAsync("api/users/login", credentials);
+
+            // השם או הסיסמה שגויים (קוד 401)
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                errorMessage = "שם המשתמש או הסיסמה שגויים.";
+                return;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                errorMessage = "הכניסה נכשלה. נסו שוב.";
+                return;
+            }
+
+            // הבקר החזיר את המשתמש עם התפקיד שלו
+            User? user = await response.Content.ReadFromJsonAsync<User>();
+            if (user == null)
+            {
+                errorMessage = "הכניסה נכשלה. נסו שוב.";
+                return;
+            }
+
+            // שומרים בשירות. מכאן כל הדפים יודעים מי מחובר
+            Session.Login(user);
+
+            // מעבר לדף הבית
+            Navigation.NavigateTo("");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"שגיאת תקשורת: {ex.Message}";
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+}

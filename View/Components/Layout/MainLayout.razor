@@ -1,14 +1,26 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
+@inject UserSession Session
+@inject NavigationManager Navigation
 
-@* נוצר בגרסה 1 מהתבנית, ונכתב מחדש בגרסה 4. המבנה של כל דפי האתר: סרגל עליון, תוכן הדף ותחתית *@
+@* נוצר בגרסה 1 מהתבנית, ונכתב מחדש בגרסה 4. עודכן בגרסה 6 להצגת משתמש מחובר *@
 
-@* סרגל עליון שנשאר צמוד לראש המסך גם בגלילה: לוגו, ושני כפתורים לכניסה ולהרשמה *@
+@* סרגל עליון שנשאר צמוד לראש המסך גם בגלילה *@
 <header class="topbar sticky-top">
     <div class="container d-flex align-items-center justify-content-between py-3">
         <Logo />
-        <nav class="d-flex gap-2">
-            <a class="btn btn-outline-primary" href="login">כניסה</a>
-            <a class="btn btn-primary" href="register">הרשמה</a>
+        <nav class="d-flex align-items-center gap-3">
+            @if (Session.IsLoggedIn)
+            {
+                <span class="fw-semibold">שלום, @Session.FullName</span>
+                <button class="btn btn-outline-primary" type="button" @onclick="Logout">יציאה</button>
+            }
+            else
+            {
+                <span class="fw-semibold">שלום, אורח</span>
+                <a class="btn btn-outline-primary" href="login">כניסה</a>
+                <a class="btn btn-primary" href="register">הרשמה</a>
+            }
         </nav>
     </div>
 </header>
@@ -32,3 +44,29 @@
     <a href="." class="reload">רענון</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // נרשמים לאירוע שינוי המשתמש
+        Session.OnChange += OnSessionChanged;
+    }
+
+    private void OnSessionChanged()
+    {
+        // מעדכנים את התצוגה של הסרגל
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void Logout()
+    {
+        Session.Logout();
+        Navigation.NavigateTo("");
+    }
+
+    public void Dispose()
+    {
+        // מבטלים את ההרשמה לאירוע כשהסרגל נסגר
+        Session.OnChange -= OnSessionChanged;
+    }
+}
