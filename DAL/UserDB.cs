@@ -8,7 +8,7 @@ using MySql.Data.MySqlClient;
 namespace DAL
 {
     /// <summary>
-    /// נוסף בגרסה 3.
+    /// נוסף בגרסה 3, עודכן בגרסה 7 לגיבוב סיסמאות עם BCrypt.
     /// כל השאילתות מול טבלת המשתמשים נמצאות כאן, ורק כאן.
     /// שכבת השירות לא כותבת שאילתות בעצמה: היא קוראת לפעולות של המחלקה הזו.
     /// כל פעולה פותחת חיבור משלה, מריצה שאילתה אחת וסוגרת את החיבור.
@@ -34,7 +34,8 @@ namespace DAL
         }
 
         /// <summary>
-        /// הוספת משתמש חדש. מזהה התפקיד נמצא לפי שם התפקיד
+        /// הוספת משתמש חדש. מזהה התפקיד נמצא לפי שם התפקיד.
+        /// הגיבוב של הסיסמה מבוצע בעזרת BCrypt.Net מול בסיס הנתונים.
         /// </summary>
         /// <returns>המזהה שבסיס הנתונים נתן למשתמש החדש</returns>
         public async Task<int> AddUserAsync(User user, string roleName = "Student")
@@ -52,7 +53,8 @@ namespace DAL
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@Username", user.Username);
             command.Parameters.AddWithValue("@Email", user.Email);
-            command.Parameters.AddWithValue("@Password", user.Password);
+            // --- עודכן בגרסה 7: שמירת גיבוב הסיסמה במקום הסיסמה הגלויה ---
+            command.Parameters.AddWithValue("@Password", BCrypt.Net.BCrypt.HashPassword(user.Password));
             command.Parameters.AddWithValue("@FullName", user.FullName);
             command.Parameters.AddWithValue("@IsActive", user.IsActive);
             command.Parameters.AddWithValue("@RoleName", roleName);
@@ -101,7 +103,7 @@ namespace DAL
         }
 
         /// <summary>
-        /// בדיקת התחברות
+        /// בדיקת התחברות - עודכן בגרסה 7 לבדיקת גיבוב עם BCrypt.Net.Verify
         /// </summary>
         /// <returns>המשתמש אם השם והסיסמה נכונים, אחרת ערך ריק</returns>
         public async Task<User?> CheckLoginAsync(string username, string password)
@@ -121,8 +123,13 @@ namespace DAL
 
             User user = ReadUser(reader);
 
-            // ההשוואה נעשית בקוד ולא בשאילתה, כי בסיס הנתונים משווה מחרוזות בלי הבדל בין אותיות גדולות לקטנות
-            return user.Password == password ? user : null;
+            // --- עודכן בגרסה 7: בדיקת הסיסמה שהוקלדה מול הגיבוב השמור בעזרת Verify ---
+            if (BCrypt.Net.BCrypt.Verify(password, user.Password))
+            {
+                return user;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -214,7 +221,7 @@ namespace DAL
         }
 
         /// <summary>
-        /// עדכון סיסמה
+        /// עדכון סיסמה - עודכן בגרסה 7 לשמירת הגיבוב
         /// </summary>
         /// <returns>אמת אם המשתמש נמצא</returns>
         public async Task<bool> UpdatePasswordAsync(int userId, string newPassword)
@@ -224,7 +231,8 @@ namespace DAL
             using var connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
             using var command = new MySqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@Password", newPassword);
+            // --- עודכן בגרסה 7: גיבוב הסיסמה החדשה לפני השמירה ---
+            command.Parameters.AddWithValue("@Password", BCrypt.Net.BCrypt.HashPassword(newPassword));
             command.Parameters.AddWithValue("@UserID", userId);
 
             return await command.ExecuteNonQueryAsync() > 0;

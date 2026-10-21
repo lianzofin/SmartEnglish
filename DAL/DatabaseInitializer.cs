@@ -1,12 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
+using Model;
 using MySql.Data.MySqlClient;
 
 namespace DAL
 {
     /// <summary>
-    /// נוסף בגרסה 2.
+    /// נוסף בגרסה 2, עודכן בגרסה 7 לגיבוב סיסמאות עם BCrypt.
     /// מחלקה שאחראית להכין את בסיס הנתונים לפני שהמערכת מתחילה לעבוד.
     /// היא נקראת פעם אחת, כשהשרת עולה, ויוצרת את בסיס הנתונים, את הטבלאות ואת נתוני הפתיחה.
     /// אפשר להריץ אותה שוב ושוב בלי נזק: בכל שלב נוצר רק מה שעוד לא קיים.
@@ -35,6 +37,9 @@ namespace DAL
             // שלב ג': הכנסת נתוני ברירת מחדל לטבלת התפקידים ולטבלת המשתמשים
             await SeedRolesAsync(dbConnectionString);
             await SeedUsersAsync(dbConnectionString);
+
+            // שלב ד' (נוסף בגרסה 7): גיבוב סיסמאות ישנות שלא גובבו בעבר
+            await HashOldPasswordsAsync(dbConnectionString);
         }
 
         /// <summary>
@@ -202,7 +207,7 @@ namespace DAL
         }
 
         /// <summary>
-        /// מכניסה לטבלת המשתמשים 10 משתמשי בדיקה ראשוניים (מנהל 1, 2 מורים ו-7 תלמידים).
+        /// עודכן בגרסה 7: מכניס לטבלת המשתמשים את המשתמשים ההתחלתיים עם סיסמאות מגובבות (BCrypt).
         /// </summary>
         private static async Task SeedUsersAsync(string dbConnectionString)
         {
@@ -217,21 +222,61 @@ namespace DAL
 
             if (count == 0)
             {
+                // הכנת הסיסמאות המגובבות עבור משתמשי הברירת מחדל
+                string adminHash = BCrypt.Net.BCrypt.HashPassword("admin");
+                string teacherHash = BCrypt.Net.BCrypt.HashPassword("teacher123");
+                string userHash = BCrypt.Net.BCrypt.HashPassword("user");
+
                 string insertUsersSql = @"
                     INSERT INTO Users (Username, FullName, Email, PasswordHash, RoleID, IsActive) VALUES 
-                    ('admin', 'System Admin', 'admin@smartenglish.com', 'admin123', 1, TRUE),
-                    ('sarah_t', 'Sarah Teacher', 'sarah@school.com', 'teacher123', 2, TRUE),
-                    ('david_t', 'David Teacher', 'david@school.com', 'teacher123', 2, TRUE),
-                    ('alex_s', 'Alex Student', 'alex@student.com', 'student123', 3, TRUE),
-                    ('emma_s', 'Emma Student', 'emma@student.com', 'student123', 3, TRUE),
-                    ('john_s', 'John Student', 'john@student.com', 'student123', 3, TRUE),
-                    ('mira_s', 'Mira Student', 'mira@student.com', 'student123', 3, TRUE),
-                    ('dani_s', 'Dani Student', 'dani@student.com', 'student123', 3, TRUE),
-                    ('noa_s', 'Noa Student', 'noa@student.com', 'student123', 3, TRUE),
-                    ('ron_s', 'Ron Student', 'ron@student.com', 'student123', 3, FALSE);
+                    ('admin', 'System Admin', 'admin@smartenglish.com', @AdminHash, 1, TRUE),
+                    ('sarah_t', 'Sarah Teacher', 'sarah@school.com', @TeacherHash, 2, TRUE),
+                    ('user', 'Test Student', 'user@student.com', @UserHash, 3, TRUE);
                 ";
+
                 using var insertCmd = new MySqlCommand(insertUsersSql, connection);
+                insertCmd.Parameters.AddWithValue("@AdminHash", adminHash);
+                insertCmd.Parameters.AddWithValue("@TeacherHash", teacherHash);
+                insertCmd.Parameters.AddWithValue("@UserHash", userHash);
+
                 await insertCmd.ExecuteNonQueryAsync();
+            }
+        }
+
+        /// <summary>
+        /// נוסף בגרסה 7: מוצא סיסמאות ישנות בטבלה שאינן מגובבות (לא מתחילות ב-$2) ומגבב אותן.
+        /// </summary>
+        private static async Task HashOldPasswordsAsync(string dbConnectionString)
+        {
+            using var connection = new MySqlConnection(dbConnectionString);
+            await connection.OpenAsync();
+
+            // שליפת המשתמשים שהסיסמה שלהם עדיין שמורה בטקסט רגיל (לא מתחילה ב-$2)
+            string selectSql = "SELECT UserID, PasswordHash FROM Users WHERE PasswordHash NOT LIKE '$2%';";
+            var usersToUpdate = new List<User>();
+
+            using (MySqlCommand selectCmd = new MySqlCommand(selectSql, connection))
+            using (var reader = await selectCmd.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    User user = new User
+                    {
+                        Id = reader.GetInt32(0),
+                        Password = reader.GetString(1)
+                    };
+                    usersToUpdate.Add(user);
+                }
+            }
+
+            // עדכון כל סיסמה ישנה לגיבוב חדש
+            foreach (User user in usersToUpdate)
+            {
+                string updateSql = "UPDATE Users SET PasswordHash = @Hash WHERE UserID = @UserID;";
+                using MySqlCommand updateCmd = new MySqlCommand(updateSql, connection);
+                updateCmd.Parameters.AddWithValue("@Hash", BCrypt.Net.BCrypt.HashPassword(user.Password));
+                updateCmd.Parameters.AddWithValue("@UserID", user.Id);
+                await updateCmd.ExecuteNonQueryAsync();
             }
         }
     }

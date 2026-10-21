@@ -74,3 +74,13 @@ Content-Type: application/json
   "username": "admin",
   "password": "wrongpassword"
 }
+
+  ###
+
+# מחיקת משתמש לפי מזהה (ID: 13)
+DELETE {{SmartEnglish_HostAddress}}/api/users/13
+
+###
+
+# מחיקת משתמש לפי מזהה (ID: 14)
+DELETE {{SmartEnglish_HostAddress}}/api/users/14

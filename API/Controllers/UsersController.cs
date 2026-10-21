@@ -5,13 +5,10 @@ using Model;
 namespace API.Controllers
 {
     /// <summary>
-    /// נוסף בגרסה 3.
+    /// נוסף בגרסה 3, עודכן בגרסה 7 לאיפוס סיסמאות בתשובות ה-API.
     /// נקודות הקצה של טבלת המשתמשים. כל פעולה מפעילה שאילתה אחת ממחלקת הגישה למשתמשים.
     /// הבקר מקבל בקשה ברשת, קורא לשכבת הגישה לנתונים ומחזיר תשובה עם קוד מצב מתאים.
     /// </summary>
-    // השורות שבסוגריים מרובעים נותנות למחלקה הגדרות מיוחדות:
-    // הראשונה מסמנת שזה בקר של שכבת השירות, ומפעילה בדיקה אוטומטית של הבקשות שמגיעות אליו.
-    // השנייה קובעת את תחילת הכתובת של כל הפעולות בבקר. במקום הסוגריים נכנס שם המחלקה בלי המילה שבסוף השם
     [ApiController]
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
@@ -25,11 +22,17 @@ namespace API.Controllers
             this.userDB = userDB;
         }
 
-        // שליפת כל המשתמשים. מחזיר קוד 200 ואת הרשימה
+        // שליפת כל המשתמשים. מחזיר קוד 200 ואת הרשימה (ללא סיסמאות)
         [HttpGet]
         public async Task<ActionResult<List<User>>> GetAll()
         {
-            return Ok(await userDB.GetAllUsersAsync());
+            var users = await userDB.GetAllUsersAsync();
+            // איפוס הסיסמה לכל המשתמשים ברשימה לפני ההחזרה
+            foreach (var user in users)
+            {
+                user.Password = string.Empty;
+            }
+            return Ok(users);
         }
 
         // שליפת משתמש לפי מזהה. המזהה מגיע מסוף הכתובת וחייב להיות מספר שלם.
@@ -38,7 +41,11 @@ namespace API.Controllers
         public async Task<ActionResult<User>> GetById(int id)
         {
             User? user = await userDB.GetUserByIdAsync(id);
-            return user == null ? NotFound() : Ok(user);
+            if (user == null)
+                return NotFound();
+
+            user.Password = string.Empty; // איפוס הסיסמה לפני ההחזרה
+            return Ok(user);
         }
 
         // בדיקה אם שם משתמש תפוס. מחזיר אמת או שקר
@@ -85,6 +92,8 @@ namespace API.Controllers
                 return BadRequest(ex.Message);
             }
 
+            user.Password = string.Empty; // איפוס הסיסמה לפני הפיכת האובייקט לתגובה
+
             // קוד 201: המשתמש נוצר. התשובה כוללת את המשתמש ואת הכתובת שבה אפשר לשלוף אותו
             return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
         }
@@ -95,7 +104,11 @@ namespace API.Controllers
         public async Task<ActionResult<User>> Login([FromBody] User credentials)
         {
             User? user = await userDB.CheckLoginAsync(credentials.Username, credentials.Password);
-            return user == null ? Unauthorized() : Ok(user);
+            if (user == null)
+                return Unauthorized();
+
+            user.Password = string.Empty; // איפוס הסיסמה לפני הפיכת האובייקט לתגובה
+            return Ok(user);
         }
 
         // שינוי תפקיד. שם התפקיד החדש מגיע בכתובת.
