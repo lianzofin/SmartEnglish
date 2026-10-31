@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-// נוסף בגרסה 3.
 // מחלקת בסיס לכל הישויות במערכת.
-// המחלקה מוגדרת abstract מפני שאין עצמים מסוג "ישות" בלבד, אלא רק מטיפוסים יורשים (כמו User).
 namespace Model
 {
     public abstract class BaseEntity

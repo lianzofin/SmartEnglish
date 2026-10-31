@@ -1,8 +1,4 @@
-# קובץ בדיקות לנקודות הקצה של שכבת השירות. נוסף בגרסה 1, והבקשות של המשתמשים נוספו בגרסה 3.
-# מריצים את שכבת השירות, ואז לוחצים על הקישור שמופיע מעל כל בקשה כדי לשלוח אותה.
-# הסימן ### מפריד בין בקשה לבקשה.
 
-# הכתובת של השרת. כל הבקשות בקובץ משתמשות במשתנה הזה
 @SmartEnglish_HostAddress = http://localhost:5130
 
 ###
@@ -74,13 +70,3 @@ Content-Type: application/json
   "username": "admin",
   "password": "wrongpassword"
 }
-
-  ###
-
-# מחיקת משתמש לפי מזהה (ID: 13)
-DELETE {{SmartEnglish_HostAddress}}/api/users/13
-
-###
-
-# מחיקת משתמש לפי מזהה (ID: 14)
-DELETE {{SmartEnglish_HostAddress}}/api/users/14

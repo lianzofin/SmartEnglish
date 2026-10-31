@@ -7,77 +7,48 @@ using MySql.Data.MySqlClient;
 
 namespace DAL
 {
-    /// <summary>
-    /// נוסף בגרסה 2, עודכן בגרסה 7 לגיבוב סיסמאות עם BCrypt.
-    /// מחלקה שאחראית להכין את בסיס הנתונים לפני שהמערכת מתחילה לעבוד.
-    /// היא נקראת פעם אחת, כשהשרת עולה, ויוצרת את בסיס הנתונים, את הטבלאות ואת נתוני הפתיחה.
-    /// אפשר להריץ אותה שוב ושוב בלי נזק: בכל שלב נוצר רק מה שעוד לא קיים.
-    /// המחלקה סטטית, כי אין לה מצב משלה ואין צורך ליצור ממנה עצמים.
-    /// </summary>
+    // מחלקה לאתחול בסיס הנתונים בעת עליית השרת
     public static class DatabaseInitializer
     {
-        // שם בסיס הנתונים מוגדר במקום אחד בלבד, כדי שכל הפעולות ישתמשו באותו שם
         private const string DatabaseName = "SmartEnglishDB";
 
-        /// <summary>
-        /// פעולת האתחול הראשית - נקראת בעת עליית האפליקציה
-        /// </summary>
-        /// <param name="serverConnectionString">מחרוזת חיבור לשרת (ללא ציון בסיס הנתונים)</param>
+        // הפעולה הראשית לאתחול הנתונים והטבלאות
         public static async Task InitializeAsync(string serverConnectionString)
         {
-            // שלב א': יצירת בסיס הנתונים אם אינו קיים
             await CreateDatabaseAsync(serverConnectionString);
 
-            // מחרוזת חיבור מלאה הכוללת את שם בסיס הנתונים
             string dbConnectionString = $"{serverConnectionString}Database={DatabaseName};";
 
-            // שלב ב': יצירת הטבלאות והתאמת עמודות חסרות
             await CreateTablesAsync(dbConnectionString);
-
-            // שלב ג': הכנסת נתוני ברירת מחדל לטבלת התפקידים ולטבלת המשתמשים
             await SeedRolesAsync(dbConnectionString);
             await SeedUsersAsync(dbConnectionString);
-
-            // שלב ד' (נוסף בגרסה 7): גיבוב סיסמאות ישנות שלא גובבו בעבר
             await HashOldPasswordsAsync(dbConnectionString);
         }
 
-        /// <summary>
-        /// יוצרת את בסיס הנתונים עצמו, אם הוא עוד לא קיים.
-        /// </summary>
+        // יצירת בסיס הנתונים במידה ואינו קיים
         private static async Task CreateDatabaseAsync(string serverConnectionString)
         {
-            // הקידוד שנבחר תומך בכל השפות, כולל עברית וסמלים מיוחדים,
-            // וכלל המיון שנבחר משווה טקסט בלי להבדיל בין אותיות גדולות לקטנות
             string sql = $"CREATE DATABASE IF NOT EXISTS `{DatabaseName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;";
 
-            // מתחברים לשרת בלי לציין בסיס נתונים, כי בשלב הזה הוא אולי עוד לא קיים.
-            // החיבור והפקודה נסגרים אוטומטית בסוף הפעולה, גם אם נזרקה חריגה
             using var connection = new MySqlConnection(serverConnectionString);
             await connection.OpenAsync();
             using var command = new MySqlCommand(sql, connection);
 
-            // הרצת פקודה שלא מחזירה נתונים, אלא רק משנה את מבנה השרת
             await command.ExecuteNonQueryAsync();
         }
 
-        /// <summary>
-        /// יוצרת את שמונת הטבלאות של המערכת, אם הן עוד לא קיימות.
-        /// </summary>
+        // יצירת הטבלאות הנדרשות לפרויקט
         private static async Task CreateTablesAsync(string connectionString)
         {
             using var connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
 
-            // יצירת 8 הטבלאות בהתאם למסמך תכנון בסיס הנתונים של SmartEnglish
             string query = @"
-                -- תפקידים
                 CREATE TABLE IF NOT EXISTS Roles (
                     RoleID INT AUTO_INCREMENT PRIMARY KEY,
                     RoleName VARCHAR(30) NOT NULL UNIQUE
                 ) ENGINE=InnoDB;
 
-                -- 1. משתמשים (כולל RoleID ו-IsActive)
                 CREATE TABLE IF NOT EXISTS Users ( 
                     UserID INT AUTO_INCREMENT PRIMARY KEY, 
                     Username VARCHAR(50) NOT NULL UNIQUE, 
@@ -90,7 +61,6 @@ namespace DAL
                     FOREIGN KEY (RoleID) REFERENCES Roles(RoleID)
                 ) ENGINE=InnoDB;
 
-                -- 2. קורסים 
                 CREATE TABLE IF NOT EXISTS Courses ( 
                     CourseID INT AUTO_INCREMENT PRIMARY KEY, 
                     CourseName VARCHAR(100) NOT NULL, 
@@ -99,7 +69,6 @@ namespace DAL
                     FOREIGN KEY (TeacherID) REFERENCES Users(UserID) ON DELETE SET NULL 
                 ) ENGINE=InnoDB;
 
-                -- 3. הרשמת תלמידים לקורסים (טבלת איחוד) 
                 CREATE TABLE IF NOT EXISTS UserCourses (
                     EnrollmentID INT AUTO_INCREMENT PRIMARY KEY, 
                     StudentID INT NOT NULL, 
@@ -109,7 +78,6 @@ namespace DAL
                     FOREIGN KEY (CourseID) REFERENCES Courses(CourseID) ON DELETE CASCADE 
                 ) ENGINE=InnoDB;
 
-                -- 4. תרגילים 
                 CREATE TABLE IF NOT EXISTS Exercises ( 
                     ExerciseID INT AUTO_INCREMENT PRIMARY KEY, 
                     Title VARCHAR(100) NOT NULL, 
@@ -119,7 +87,6 @@ namespace DAL
                     FOREIGN KEY (CreatedBy) REFERENCES Users(UserID) ON DELETE SET NULL 
                 ) ENGINE=InnoDB;
 
-                -- 5. שאלות בלומדה 
                 CREATE TABLE IF NOT EXISTS Questions ( 
                     QuestionID INT AUTO_INCREMENT PRIMARY KEY, 
                     ExerciseID INT NOT NULL, 
@@ -131,7 +98,6 @@ namespace DAL
                     FOREIGN KEY (ExerciseID) REFERENCES Exercises(ExerciseID) ON DELETE CASCADE 
                 ) ENGINE=InnoDB;
 
-                -- 6. משימות (טבלת איחוד) 
                 CREATE TABLE IF NOT EXISTS Assignments ( 
                     AssignmentID INT AUTO_INCREMENT PRIMARY KEY, 
                     CourseID INT NOT NULL, 
@@ -141,7 +107,6 @@ namespace DAL
                     FOREIGN KEY (ExerciseID) REFERENCES Exercises(ExerciseID) ON DELETE CASCADE 
                 ) ENGINE=InnoDB;
 
-                -- 7. התקדמות תלמידים (טבלת איחוד) 
                 CREATE TABLE IF NOT EXISTS StudentProgress ( 
                     ProgressID INT AUTO_INCREMENT PRIMARY KEY, 
                     StudentID INT NOT NULL, 
@@ -152,7 +117,6 @@ namespace DAL
                     FOREIGN KEY (ExerciseID) REFERENCES Exercises(ExerciseID) ON DELETE CASCADE 
                 ) ENGINE=InnoDB;
 
-                -- 8. מעקב נוכחות בשיעורים (טבלת איחוד) 
                 CREATE TABLE IF NOT EXISTS Attendance ( 
                     AttendanceID INT AUTO_INCREMENT PRIMARY KEY, 
                     CourseID INT NOT NULL, 
@@ -166,7 +130,6 @@ namespace DAL
             using var command = new MySqlCommand(query, connection);
             await command.ExecuteNonQueryAsync();
 
-            // דרך בטוחה ב-MySQL להוסיף את העמודה IsActive אם היא חסרה בטבלה ישנה
             try
             {
                 string addColSql = "ALTER TABLE Users ADD COLUMN IsActive BOOLEAN NOT NULL DEFAULT TRUE;";
@@ -175,19 +138,16 @@ namespace DAL
             }
             catch (MySqlException)
             {
-                // אם העמודה כבר קיימת, השגיאה תיקלט כאן והתוכנית תמשיך כרגיל
+                // עמודת IsActive כבר קיימת
             }
         }
 
-        /// <summary>
-        /// מכניסה לטבלת התפקידים את שלושת התפקידים הקבועים של המערכת.
-        /// </summary>
+        // הכנסת תפקידי ברירת מחדל
         private static async Task SeedRolesAsync(string dbConnectionString)
         {
             using var connection = new MySqlConnection(dbConnectionString);
             await connection.OpenAsync();
 
-            // בדיקה אם הטבלה ריקה לפני הכנסת נתוני ברירת המחדל
             string checkSql = "SELECT COUNT(*) FROM Roles;";
             using var checkCmd = new MySqlCommand(checkSql, connection);
 
@@ -206,15 +166,12 @@ namespace DAL
             }
         }
 
-        /// <summary>
-        /// עודכן בגרסה 7: מכניס לטבלת המשתמשים את המשתמשים ההתחלתיים עם סיסמאות מגובבות (BCrypt).
-        /// </summary>
+        // הכנסת משתמשים ראשוניים עם סיסמאות מגובבות
         private static async Task SeedUsersAsync(string dbConnectionString)
         {
             using var connection = new MySqlConnection(dbConnectionString);
             await connection.OpenAsync();
 
-            // בדיקה אם הטבלה ריקה לפני הכנסת נתוני ברירת המחדל
             string checkSql = "SELECT COUNT(*) FROM Users;";
             using var checkCmd = new MySqlCommand(checkSql, connection);
 
@@ -222,7 +179,6 @@ namespace DAL
 
             if (count == 0)
             {
-                // הכנת הסיסמאות המגובבות עבור משתמשי הברירת מחדל
                 string adminHash = BCrypt.Net.BCrypt.HashPassword("admin");
                 string teacherHash = BCrypt.Net.BCrypt.HashPassword("teacher123");
                 string userHash = BCrypt.Net.BCrypt.HashPassword("user");
@@ -243,15 +199,12 @@ namespace DAL
             }
         }
 
-        /// <summary>
-        /// נוסף בגרסה 7: מוצא סיסמאות ישנות בטבלה שאינן מגובבות (לא מתחילות ב-$2) ומגבב אותן.
-        /// </summary>
+        // גיבוב סיסמאות ישנות במידה ואינן מגובבות
         private static async Task HashOldPasswordsAsync(string dbConnectionString)
         {
             using var connection = new MySqlConnection(dbConnectionString);
             await connection.OpenAsync();
 
-            // שליפת המשתמשים שהסיסמה שלהם עדיין שמורה בטקסט רגיל (לא מתחילה ב-$2)
             string selectSql = "SELECT UserID, PasswordHash FROM Users WHERE PasswordHash NOT LIKE '$2%';";
             var usersToUpdate = new List<User>();
 
@@ -269,7 +222,6 @@ namespace DAL
                 }
             }
 
-            // עדכון כל סיסמה ישנה לגיבוב חדש
             foreach (User user in usersToUpdate)
             {
                 string updateSql = "UPDATE Users SET PasswordHash = @Hash WHERE UserID = @UserID;";

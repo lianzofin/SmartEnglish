@@ -2,32 +2,21 @@ namespace API
 {
     public class Program
     {
-        // הפעולה הראשית אסינכרונית, כדי שאפשר יהיה לחכות בתוכה לאתחול בסיס הנתונים
         public static async Task Main(string[] args)
         {
-            // הכנת השרת: קריאת ההגדרות ורישום השירותים
             var builder = WebApplication.CreateBuilder(args);
 
-            // רישום הבקרים, כך שהשרת ימצא אותם ויפנה אליהם בקשות
+            // רישום הבקרים ותיעוד ה-OpenAPI
             builder.Services.AddControllers();
-
-            // רישום מסמך שמתאר אוטומטית את כל נקודות הקצה של השרת
             builder.Services.AddOpenApi();
 
-            // מאיפה מגיעה מחרוזת החיבור:
-            // השרת קורא את ההגדרות שלו מכמה מקורות ומאחד אותם: קובץ ההגדרות של הפרויקט, ומעליו קובץ הסודות של המשתמש.
-            // את מחרוזת החיבור שמרנו בקובץ הסודות, בתוך קבוצת מחרוזות החיבור, תחת השם שמופיע כאן בין המירכאות.
-            // פותחים את קובץ הסודות בלחיצה ימנית על פרויקט שכבת השירות, ובחירה בפריט של ניהול הסודות בתפריט.
-            // הקובץ נשמר בתיקייה של המשתמש במחשב, מחוץ לתיקיית הפרויקט, ולכן הסיסמה לא עולה לגיט.
-            // אם המחרוזת לא נמצאה, נזרקת חריגה, והשרת לא עולה.
-            //
-            // רישום מחלקת הגישה למשתמשים עם מחרוזת חיבור מלאה (כולל שם בסיס הנתונים), כדי שהבקרים יקבלו אותה אוטומטית.
-            // נוצר עצם אחד בלבד, וכל הבקשות משתמשות בו, כי אין בו נתונים שמשתנים
+            // טעינת מחרוזת החיבור מ-User Secrets ורישום UserDB כ-Singleton
             string dbConnectionString = (builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found."))
                 + "Database=SmartEnglishDB;";
             builder.Services.AddSingleton(new DAL.UserDB(dbConnectionString));
 
+            // הגדרת מדיניות CORS המאפשרת גישה מכל מקור
             builder.Services.AddCors(options =>
             {
                 options.AddDefaultPolicy(policy =>
@@ -36,35 +25,26 @@ namespace API
                           .AllowAnyHeader());
             });
 
-
-
-            // בניית האפליקציה מתוך ההגדרות שנרשמו
             var app = builder.Build();
 
             app.UseCors();
 
-            // שליפה של אותה מחרוזת חיבור מקובץ הסודות, הפעם בלי להוסיף את שם בסיס הנתונים,
-            // כי האתחול מתחבר קודם לשרת עצמו, ורק אחר כך יוצר את בסיס הנתונים
+            // אתחול בסיס הנתונים והטבלאות לפני הפעלת השרת
             string serverConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-            // האתחול מסתיים לפני שהשרת מתחיל לקבל בקשות
             await DAL.DatabaseInitializer.InitializeAsync(serverConnectionString);
 
-            // בסביבת הפיתוח בלבד: חשיפת מסמך התיאור של נקודות הקצה
+            // חשיפת תיעוד ה-API בסביבת פיתוח
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
             }
 
-            // בדיקת הרשאות. בשלב הזה של הפרויקט עוד אין דפים מוגבלים
             app.UseAuthorization();
-
-            // חיבור כל כתובת לפעולה המתאימה בבקר, לפי השורות שבסוגריים מרובעים מעל הפעולות
             app.MapControllers();
 
-            // הפעלת השרת. מכאן הוא מקבל בקשות עד שעוצרים אותו
-            // _
+            // הרצת השרת
             await app.RunAsync();
         }
     }

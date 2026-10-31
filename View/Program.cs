@@ -2,38 +2,36 @@ using View.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// רישום רכיבי Razor ורכיבי Interactive Server
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// --- שלב 3 (גרסה 5): טעינת כתובת ה-API והרשמת HttpClient ---
+// טעינת כתובת ה-API מ-appsettings.json ורישום HttpClient עבור שכבת התצוגה
 string apiBaseUrl = builder.Configuration["ApiBaseUrl"]
     ?? throw new InvalidOperationException("ApiBaseUrl not found in appsettings.json.");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseUrl) });
 
-// --- שלב 3 (גרסה 6): רישום שירות UserSession ---
+// רישום שירות UserSession לניהול מצב ההתחברות של המשתמש
 builder.Services.AddScoped<View.Services.UserSession>();
 
-// -------------------------------------------------------------
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// הגדרת טיפול בשגיאות ורשת מאובטחת בסביבת ייצור
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
+// הפניה לדף שגיאה מותאם במקרה של דף לא נמצא (404)
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 
 app.UseHttpsRedirection();
-
 app.UseAntiforgery();
-
 app.MapStaticAssets();
 
+// חיבור רכיב App כרכיב השורש של האפליקציה
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
