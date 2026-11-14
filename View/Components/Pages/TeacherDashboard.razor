@@ -1,0 +1,31 @@
+﻿@page "/teacher"
+@inject View.Services.UserSession Session
+@inject NavigationManager Nav
+
+<PageTitle>אזור מורים · SmartEnglish</PageTitle>
+
+@* הצגת תוכן הדף רק אם המשתמש מחובר ותפקידו הוא Teacher *@
+@if (Session.IsLoggedIn && Session.RoleName == "Teacher")
+{
+    <div class="container py-5">
+        <h1>אזור מורים (Teacher)</h1>
+        <p class="lead">שלום @Session.FullName, ברוך הבא למסך ניהול הקורסים והתלמידים.</p>
+    </div>
+}
+
+@code {
+    // הפעולה רצה בעת טעינת הדף ובודקת הרשאות גישה
+    protected override void OnInitialized()
+    {
+        if (!Session.IsLoggedIn)
+        {
+            // אורח לא מחובר מועבר לדף הכניסה
+            Nav.NavigateTo("/login");
+        }
+        else if (Session.RoleName != "Teacher")
+        {
+            // משתמש מחובר ללא הרשאת מורה מועבר לדף אין הרשאה
+            Nav.NavigateTo("/access-denied");
+        }
+    }
+}

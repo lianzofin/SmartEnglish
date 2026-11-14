@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 
 // מחלקה שמייצגת משתמש במערכת.
 namespace Model

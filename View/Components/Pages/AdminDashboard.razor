@@ -1,0 +1,31 @@
+﻿@page "/admin"
+@inject View.Services.UserSession Session
+@inject NavigationManager Nav
+
+<PageTitle>ניהול מערכת · SmartEnglish</PageTitle>
+
+@* הצגת תוכן הדף רק אם המשתמש מחובר ותפקידו הוא Admin *@
+@if (Session.IsLoggedIn && Session.RoleName == "Admin")
+{
+    <div class="container py-5">
+        <h1>אזור ניהול מערכת (Admin)</h1>
+        <p class="lead">שלום @Session.FullName, ברוך הבא למסך ניהול המערכת.</p>
+    </div>
+}
+
+@code {
+    // הפעולה רצה בעת טעינת הדף ובודקת הרשאות גישה
+    protected override void OnInitialized()
+    {
+        if (!Session.IsLoggedIn)
+        {
+            // אורח לא מחובר מועבר לדף הכניסה
+            Nav.NavigateTo("/login");
+        }
+        else if (Session.RoleName != "Admin")
+        {
+            // משתמש מחובר ללא הרשאת מנהל מועבר לדף אין הרשאה
+            Nav.NavigateTo("/access-denied");
+        }
+    }
+}

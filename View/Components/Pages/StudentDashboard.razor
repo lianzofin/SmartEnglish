@@ -1,0 +1,31 @@
+﻿@page "/student"
+@inject View.Services.UserSession Session
+@inject NavigationManager Nav
+
+<PageTitle>אזור תלמידים · SmartEnglish</PageTitle>
+
+@* הצגת תוכן הדף רק אם המשתמש מחובר ותפקידו הוא Student *@
+@if (Session.IsLoggedIn && Session.RoleName == "Student")
+{
+    <div class="container py-5">
+        <h1>אזור תלמידים (Student)</h1>
+        <p class="lead">שלום @Session.FullName, ברוך הבא למסך התרגול האישי שלך.</p>
+    </div>
+}
+
+@code {
+    // הפעולה רצה בעת טעינת הדף ובודקת הרשאות גישה
+    protected override void OnInitialized()
+    {
+        if (!Session.IsLoggedIn)
+        {
+            // אורח לא מחובר מועבר לדף הכניסה
+            Nav.NavigateTo("/login");
+        }
+        else if (Session.RoleName != "Student")
+        {
+            // משתמש מחובר ללא הרשאת תלמיד מועבר לדף אין הרשאה
+            Nav.NavigateTo("/access-denied");
+        }
+    }
+}
