@@ -4,27 +4,79 @@
 
 <PageTitle>ניהול מערכת · SmartEnglish</PageTitle>
 
-@* הצגת תוכן הדף רק אם המשתמש מחובר ותפקידו הוא Admin *@
+@* דף הבית של מנהל המערכת - מציג תמונת מצב כללית של האתר וגישה למסכי ניהול. מוגן לתפקיד Admin בלבד *@
 @if (Session.IsLoggedIn && Session.RoleName == "Admin")
 {
-    <div class="container py-5">
-        <h1>אזור ניהול מערכת (Admin)</h1>
-        <p class="lead">שלום @Session.FullName, ברוך הבא למסך ניהול המערכת.</p>
+    <div class="container py-4 py-md-5">
+        @* באנר עליון *@
+        <div class="page-banner mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <span class="status-pill status-pill-warning mb-2">מנהל מערכת (Admin)</span>
+                <h1 class="h3 fw-bold mb-1">מרכז השליטה · SmartEnglish</h1>
+                <p class="text-secondary mb-0">שלום @Session.FullName, להלן תמונת המצב העדכנית של המערכת.</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/admin/users" class="btn btn-primary px-4 py-2 fw-semibold">ניהול משתמשים</a>
+                <a href="/teacher/exercises" class="btn btn-outline-primary px-4 py-2 fw-semibold">מאגר תרגילים</a>
+            </div>
+        </div>
+
+        @* כרטיסי סטטיסטיקה מערכתיים *@
+        <div class="row g-3 g-md-4 mb-4">
+            <div class="col-12 col-sm-6 col-lg-3">
+                <StatCard Title="סה״כ משתמשים" Value="148" Subtitle="פעילים במערכת" Icon="👥" BgColor="var(--primary-light)" IconColor="var(--primary)" />
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <StatCard Title="תלמידים רשומים" Value="132" Subtitle="+12 החודש" Icon="🎒" BgColor="#E0F2FE" IconColor="var(--secondary-blue)" />
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <StatCard Title="מורים בצוות" Value="14" Subtitle="כל החשבונות מאומתים" Icon="🧑‍🏫" BgColor="#FEF3C7" IconColor="var(--accent-gold-hover)" />
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <StatCard Title="תרגילים באתר" Value="64" Subtitle="4 קטגוריות לימוד" Icon="📚" BgColor="var(--true-light)" IconColor="var(--true)" />
+            </div>
+        </div>
+
+        @* כרטיסי ניווט מהיר לכלי הניהול *@
+        <div class="row g-3 g-md-4">
+            <div class="col-12 col-md-6">
+                <div class="dashboard-card h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="icon-box mb-3 fs-4">👥</div>
+                        <h2 class="h5 fw-bold">ניהול משתמשים והרשאות</h2>
+                        <p class="text-secondary">צפייה ברשימת המשתמשים הרשומים, סינון לפי תפקיד (תלמיד, מורה, מנהל) ועדכון סטטוס חשבון.</p>
+                    </div>
+                    <div>
+                        <a href="/admin/users" class="btn btn-primary">כניסה לניהול משתמשים ➔</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <div class="dashboard-card h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="icon-box mb-3 fs-4" style="background: #FEF3C7; color: var(--accent-gold-hover);">📝</div>
+                        <h2 class="h5 fw-bold">ניהול תכנים ותרגילים</h2>
+                        <p class="text-secondary">צפייה בכל התרגילים הקיימים באתר, הוספת שאלות חדשות ועריכת רמות קושי.</p>
+                    </div>
+                    <div>
+                        <a href="/teacher/exercises" class="btn btn-outline-primary">כניסה למאגר התרגילים ➔</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
 @code {
-    // הפעולה רצה בעת טעינת הדף ובודקת הרשאות גישה
     protected override void OnInitialized()
     {
         if (!Session.IsLoggedIn)
         {
-            // אורח לא מחובר מועבר לדף הכניסה
             Nav.NavigateTo("/login");
         }
         else if (Session.RoleName != "Admin")
         {
-            // משתמש מחובר ללא הרשאת מנהל מועבר לדף אין הרשאה
             Nav.NavigateTo("/access-denied");
         }
     }

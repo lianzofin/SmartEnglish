@@ -4,27 +4,87 @@
 
 <PageTitle>אזור מורים · SmartEnglish</PageTitle>
 
-@* הצגת תוכן הדף רק אם המשתמש מחובר ותפקידו הוא Teacher *@
+@* דף הבית של המורה - מציג סיכום כיתות, תרגילים שנוצרו וגישה לניהול תרגילים. מוגן לתפקיד Teacher בלבד *@
 @if (Session.IsLoggedIn && Session.RoleName == "Teacher")
 {
-    <div class="container py-5">
-        <h1>אזור מורים (Teacher)</h1>
-        <p class="lead">שלום @Session.FullName, ברוך הבא למסך ניהול הקורסים והתלמידים.</p>
+    <div class="container py-4 py-md-5">
+        @* באנר עליון *@
+        <div class="page-banner mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <span class="status-pill status-pill-success mb-2">סגל הוראה</span>
+                <h1 class="h3 fw-bold mb-1">שלום, @Session.FullName 👩‍🏫</h1>
+                <p class="text-secondary mb-0">כאן ניתן לעקוב אחר התקדמות התלמידים ולנהל את מאגר התרגילים.</p>
+            </div>
+            <a href="/teacher/exercises" class="btn btn-primary px-4 py-2 fw-semibold">
+                + ניהול והוספת תרגילים
+            </a>
+        </div>
+
+        @* כרטיסי נתונים בעזרת StatCard *@
+        <div class="row g-3 g-md-4 mb-4">
+            <div class="col-12 col-md-4">
+                <StatCard Title="תלמידים פעילים" Value="42" Subtitle="ב-2 קבוצות לימוד" Icon="🎓" BgColor="var(--primary-light)" IconColor="var(--primary)" />
+            </div>
+            <div class="col-12 col-md-4">
+                <StatCard Title="תרגילים שיצרת" Value="16" Subtitle="3 תרגילים נוספו החודש" Icon="📝" BgColor="#FEF3C7" IconColor="var(--accent-gold-hover)" />
+            </div>
+            <div class="col-12 col-md-4">
+                <StatCard Title="ממוצע ציונים כיתתי" Value="86%" Subtitle="עלייה של 4% מהשבוע שעבר" Icon="📈" BgColor="var(--true-light)" IconColor="var(--true)" />
+            </div>
+        </div>
+
+        @* טבלת התקדמות תלמידים אחרונה *@
+        <div class="dashboard-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 fw-bold mb-0">פעילות אחרונה של תלמידים</h2>
+                <a href="/teacher/exercises" class="btn btn-sm btn-outline-primary">לכל התרגילים</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>שם התלמיד</th>
+                            <th>תרגיל אחרון</th>
+                            <th>ציון</th>
+                            <th>סטטוס</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-semibold">נועה כהן</td>
+                            <td>Present Simple & Continuous</td>
+                            <td>95%</td>
+                            <td><span class="status-pill status-pill-success">הושלם</span></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">איתי לוי</td>
+                            <td>Travel & Airport Vocabulary</td>
+                            <td>82%</td>
+                            <td><span class="status-pill status-pill-success">הושלם</span></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">מאיה אברהמי</td>
+                            <td>Reading: Tech & Innovation</td>
+                            <td>—</td>
+                            <td><span class="status-pill status-pill-warning">בתהליך</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 }
 
 @code {
-    // הפעולה רצה בעת טעינת הדף ובודקת הרשאות גישה
     protected override void OnInitialized()
     {
         if (!Session.IsLoggedIn)
         {
-            // אורח לא מחובר מועבר לדף הכניסה
             Nav.NavigateTo("/login");
         }
         else if (Session.RoleName != "Teacher")
         {
-            // משתמש מחובר ללא הרשאת מורה מועבר לדף אין הרשאה
             Nav.NavigateTo("/access-denied");
         }
     }

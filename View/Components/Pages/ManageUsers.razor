@@ -1,0 +1,112 @@
+﻿@page "/admin/users"
+@inject View.Services.UserSession Session
+@inject NavigationManager Nav
+
+<PageTitle>ניהול משתמשים · SmartEnglish</PageTitle>
+
+@* דף ניהול משתמשים - מציג רשימת משתמשים לדוגמה ואפשרויות סינון ועריכה. מוגן ל-Admin בלבד *@
+@if (Session.IsLoggedIn && Session.RoleName == "Admin")
+{
+    <div class="container py-4 py-md-5">
+        @* באנר עליון *@
+        <div class="page-banner mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <h1 class="h3 fw-bold mb-1">ניהול משתמשים במערכת</h1>
+                <p class="text-secondary mb-0">צפייה בחשבונות רשומים, שיוך תפקידים וניהול סטטוס פעילות.</p>
+            </div>
+            <a href="/admin" class="btn btn-outline-primary">חזרה ללוח הבקרה</a>
+        </div>
+
+        @* סרגל חיפוש וסינון עיצובי *@
+        <div class="dashboard-card mb-4">
+            <div class="row g-3 align-items-center">
+                <div class="col-12 col-md-6">
+                    <input type="text" class="form-control" placeholder="חיפוש לפי שם מלא או כתובת אימייל..." />
+                </div>
+                <div class="col-12 col-md-4">
+                    <select class="form-select">
+                        <option selected>כל התפקידים</option>
+                        <option>תלמיד (Student)</option>
+                        <option>מורה (Teacher)</option>
+                        <option>מנהל (Admin)</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2 d-grid">
+                    <button type="button" class="btn btn-primary">סינון</button>
+                </div>
+            </div>
+        </div>
+
+        @* טבלת משתמשים לדוגמה *@
+        <div class="dashboard-card">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>שם מלא</th>
+                            <th>אימייל</th>
+                            <th>תפקיד</th>
+                            <th>סטטוס</th>
+                            <th class="text-end">פעולות</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-semibold">נועה כהן</td>
+                            <td class="english-text">noa.cohen@example.com</td>
+                            <td><span class="badge bg-light text-dark border">Student</span></td>
+                            <td><span class="status-pill status-pill-success">פעיל</span></td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1">עריכה</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger">השבתה</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">דנה מזרחי</td>
+                            <td class="english-text">dana.teacher@example.com</td>
+                            <td><span class="badge bg-primary-subtle text-primary">Teacher</span></td>
+                            <td><span class="status-pill status-pill-success">פעיל</span></td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1">עריכה</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger">השבתה</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">איתי לוי</td>
+                            <td class="english-text">itay.levi@example.com</td>
+                            <td><span class="badge bg-light text-dark border">Student</span></td>
+                            <td><span class="status-pill status-pill-warning">ממתין לאימות</span></td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1">עריכה</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger">השבתה</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">רונית ברק</td>
+                            <td class="english-text">admin@smartenglish.com</td>
+                            <td><span class="badge bg-warning-subtle text-dark">Admin</span></td>
+                            <td><span class="status-pill status-pill-success">פעיל</span></td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1">עריכה</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!Session.IsLoggedIn)
+        {
+            Nav.NavigateTo("/login");
+        }
+        else if (Session.RoleName != "Admin")
+        {
+            Nav.NavigateTo("/access-denied");
+        }
+    }
+}

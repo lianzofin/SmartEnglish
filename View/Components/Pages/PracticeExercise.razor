@@ -1,0 +1,69 @@
+﻿@page "/student/practice"
+@inject View.Services.UserSession Session
+@inject NavigationManager Nav
+
+<PageTitle>תרגול אנגלית · SmartEnglish</PageTitle>
+
+@* דף תרגול לתלמיד - מציג ממשק פתרון שאלה לדוגמה עם מד התקדמות. מוגן לתפקיד Student בלבד *@
+@if (Session.IsLoggedIn && Session.RoleName == "Student")
+{
+    <div class="container py-4 py-md-5" style="max-width: 780px;">
+        @* שורת ניווט ומד התקדמות *@
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="/student" class="btn btn-sm btn-outline-primary">✕ יציאה מתרגול</a>
+            <span class="badge-score px-3 py-1 rounded-pill">⭐ 1,250 נקודות</span>
+        </div>
+
+        <div class="progress mb-4" style="height: 10px; border-radius: 999px;">
+            <div class="progress-bar" style="width: 40%; background-color: var(--primary);"></div>
+        </div>
+
+        @* כרטיס השאלה *@
+        <div class="dashboard-card p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="status-pill status-pill-success">אוצר מילים · שאלה 4 מתוך 10</span>
+                <span class="text-muted small">Travel & Airport</span>
+            </div>
+
+            <h1 class="h4 fw-bold mb-2">השלימו את המשפט במילה המתאימה:</h1>
+            <p class="fs-5 english-text p-3 rounded-3 mb-4" style="background-color: var(--primary-light);">
+                "Please show your passport and ________ pass at the gate before boarding the plane."
+            </p>
+
+            @* אפשרויות בחירה *@
+            <div class="d-grid gap-3 mb-4">
+                <button type="button" class="btn btn-outline-primary text-start p-3 fs-6 english-text">
+                    A. driving
+                </button>
+                <button type="button" class="btn btn-primary text-start p-3 fs-6 english-text">
+                    B. boarding ✓
+                </button>
+                <button type="button" class="btn btn-outline-primary text-start p-3 fs-6 english-text">
+                    C. shopping
+                </button>
+                <button type="button" class="btn btn-outline-primary text-start p-3 fs-6 english-text">
+                    D. parking
+                </button>
+            </div>
+
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 pt-3 border-top">
+                <span class="text-success fw-semibold">כל הכבוד! "boarding pass" הוא כרטיס עלייה למטוס.</span>
+                <a href="/student" class="btn btn-accent px-4">לשאלה הבאה ➔</a>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!Session.IsLoggedIn)
+        {
+            Nav.NavigateTo("/login");
+        }
+        else if (Session.RoleName != "Student")
+        {
+            Nav.NavigateTo("/access-denied");
+        }
+    }
+}

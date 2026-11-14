@@ -4,27 +4,89 @@
 
 <PageTitle>אזור תלמידים · SmartEnglish</PageTitle>
 
-@* הצגת תוכן הדף רק אם המשתמש מחובר ותפקידו הוא Student *@
+@* דף הבית של התלמיד - מציג מדדי התקדמות ורשימת תרגולים זמינים. מוגן למשתמשים בעלי תפקיד Student בלבד *@
 @if (Session.IsLoggedIn && Session.RoleName == "Student")
 {
-    <div class="container py-5">
-        <h1>אזור תלמידים (Student)</h1>
-        <p class="lead">שלום @Session.FullName, ברוך הבא למסך התרגול האישי שלך.</p>
+    <div class="container py-4 py-md-5">
+        @* באנר פתיחה אישי *@
+        <div class="page-banner mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+                <span class="status-pill status-pill-success mb-2">רמה: בינוני (B1)</span>
+                <h1 class="h3 fw-bold mb-1">שלום, @Session.FullName 👋</h1>
+                <p class="text-secondary mb-0">המשך לתרגל אנגלית היום ושמור על רצף הלמידה שלך.</p>
+            </div>
+            <a href="/student/practice" class="btn btn-primary px-4 py-2 fw-semibold">
+                המשך תרגול יומי ➔
+            </a>
+        </div>
+
+        @* כרטיסי מדדים בעזרת הרכיב המשותף StatCard *@
+        <div class="row g-3 g-md-4 mb-4">
+            <div class="col-12 col-md-4">
+                <StatCard Title="נקודות שצברת" Value="1,250" Subtitle="+80 נקודות השבוע" Icon="⭐" BgColor="#FEF3C7" IconColor="var(--accent-gold-hover)" />
+            </div>
+            <div class="col-12 col-md-4">
+                <StatCard Title="רצף ימי למידה" Value="6 ימים" Subtitle="שיא אישי: 14 ימים" Icon="🔥" BgColor="var(--primary-light)" IconColor="var(--primary)" />
+            </div>
+            <div class="col-12 col-md-4">
+                <StatCard Title="תרגילים שהושלמו" Value="18 / 24" Subtitle="75% מתוכנית הלימוד" Icon="🎯" BgColor="var(--true-light)" IconColor="var(--true)" />
+            </div>
+        </div>
+
+        @* תרגילים מומלצים להמשך *@
+        <div class="dashboard-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 fw-bold mb-0">המשימות והתרגילים שלי</h2>
+                <span class="text-muted small">נתונים לדוגמה</span>
+            </div>
+
+            <div class="list-group list-group-flush">
+                <div class="list-group-item px-0 py-3 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                    <div>
+                        <div class="fw-bold">אוצר מילים: נסיעות ושדה תעופה</div>
+                        <div class="small text-secondary english-text">Vocabulary · Travel & Airport (15 questions)</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="status-pill status-pill-warning">בתהליך</span>
+                        <a href="/student/practice" class="btn btn-sm btn-outline-primary">המשך</a>
+                    </div>
+                </div>
+
+                <div class="list-group-item px-0 py-3 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                    <div>
+                        <div class="fw-bold">דקדוק: זמני הווה (Present Simple & Continuous)</div>
+                        <div class="small text-secondary english-text">Grammar · Present Tenses (10 questions)</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="status-pill status-pill-success">הושלם (95%)</span>
+                        <a href="/student/practice" class="btn btn-sm btn-outline-primary">תרגל שוב</a>
+                    </div>
+                </div>
+
+                <div class="list-group-item px-0 py-3 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                    <div>
+                        <div class="fw-bold">הבנת הנקרא: טכנולוגיה וחדשנות</div>
+                        <div class="small text-secondary english-text">Reading Comprehension · Tech & Innovation</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-light text-dark border">חדש</span>
+                        <a href="/student/practice" class="btn btn-sm btn-primary">התחל</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
 @code {
-    // הפעולה רצה בעת טעינת הדף ובודקת הרשאות גישה
     protected override void OnInitialized()
     {
         if (!Session.IsLoggedIn)
         {
-            // אורח לא מחובר מועבר לדף הכניסה
             Nav.NavigateTo("/login");
         }
         else if (Session.RoleName != "Student")
         {
-            // משתמש מחובר ללא הרשאת תלמיד מועבר לדף אין הרשאה
             Nav.NavigateTo("/access-denied");
         }
     }

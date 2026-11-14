@@ -1,0 +1,34 @@
+﻿@* רכיב משותף להצגת כרטיס מדד/סטטיסטיקה בדפים הפנימיים של המערכת *@
+<div class="dashboard-card h-100 d-flex align-items-center justify-content-between">
+    <div>
+        <div class="text-secondary small fw-semibold mb-1">@Title</div>
+        <div class="h3 fw-bold mb-1 text-dark">@Value</div>
+        @if (!string.IsNullOrWhiteSpace(Subtitle))
+        {
+            <div class="small text-muted">@Subtitle</div>
+        }
+    </div>
+    <div class="icon-box fs-4" style="background: @BgColor; color: @IconColor;">
+        @Icon
+    </div>
+</div>
+
+@code {
+    // כותרת המדד
+    [Parameter] public string Title { get; set; } = string.Empty;
+
+    // הערך המספרי או הטקסט הראשי
+    [Parameter] public string Value { get; set; } = string.Empty;
+
+    // תיאור משני קצר מתחת לערך
+    [Parameter] public string? Subtitle { get; set; }
+
+    // אייקון או אימוג'י להצגה בכרטיס
+    [Parameter] public string Icon { get; set; } = "📊";
+
+    // צבע הרקע של קופסת האייקון
+    [Parameter] public string BgColor { get; set; } = "var(--primary-light)";
+
+    // צבע האייקון עצמו
+    [Parameter] public string IconColor { get; set; } = "var(--primary)";
+}

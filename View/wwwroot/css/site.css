@@ -185,3 +185,47 @@ h1, h2, h3, h4, h5, h6, span {
     color: #D97706;
     font-weight: 700;
 }
+
+/* ---------- 5. נכסים עיצוביים משותפים לדפים הפנימיים (גרסה 9) ---------- */
+
+/* כותרת עליונה אחידה לדפים פנימיים */
+.page-banner {
+    background: linear-gradient(135deg, var(--primary-light) 0%, #FFFFFF 100%);
+    border: 1px solid #E2E8F0;
+    border-radius: 20px;
+    padding: 24px 28px;
+}
+
+/* כרטיס נתונים / פעולה אחיד לדפים הפנימיים */
+.dashboard-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+    .dashboard-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(79, 70, 229, 0.08);
+    }
+
+/* תגית סטטוס מעוצבת */
+.status-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-pill-success {
+    background-color: var(--true-light);
+    color: var(--true);
+}
+
+.status-pill-warning {
+    background-color: #FEF3C7;
+    color: var(--accent-gold-hover);
+}
